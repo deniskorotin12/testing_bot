@@ -1,0 +1,24 @@
+{
+    "name": "helper_bot",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "engines": {
+        "node": "6.11.4"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "koa": "^2.4.1",
+        "koa-router": "^7.3.0",
+        "mongoose": "^5.0.1",
+        "node-telegram-bot-api": "^0.30.0",
+        "timers": "^0.1.1"
+    },
+    "devDependencies": {
+        "nodemon": "^1.14.11"
+    }
+}
