@@ -13,6 +13,7 @@
     "license": "ISC",
     "dependencies": {
         "koa": "^2.4.1",
+        "koa-bodyparser": "^4.2.0",
         "koa-router": "^7.3.0",
         "mongoose": "^5.0.1",
         "node-telegram-bot-api": "^0.30.0",

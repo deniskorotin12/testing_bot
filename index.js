@@ -2,10 +2,6 @@ const TelegramBot = require("node-telegram-bot-api");
 const TOKEN = "404568801:AAGbYs522aLjZ1IqH7nIFCa-gbCLaJSQUnI";
 const debug = require("./modules/helpers");
 const mongoose = require("mongoose");
-const Koa = require('koa');
-const Router = require('koa-router');
-
-const port = 3000;
 const hours = 13;
 const minutes = 00;
 mongoose
@@ -20,21 +16,15 @@ require("./models/date.model");
 
 console.log("Bot has been started ...");
 
-const bot = new TelegramBot(TOKEN);
-bot.setWebHook();
-
-const app = new Koa();
-const router = new Router();
-router.post('/bot', ctx =>{
-    console.log(ctx)
-    ctx.status = 200
-})
-
-app.use(router.routes())
-
-app.listen(port, () =>{
-    console.log(`Listening on ${port}`)
-})
+const bot = new TelegramBot(TOKEN, {
+    polling: {
+        interval: 300,
+        autoStart: true,
+        params: {
+            timeout: 10
+        }
+    }
+});
 
 const check_time = setInterval(function() {
     let date = new Date();
