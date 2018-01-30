@@ -6,6 +6,10 @@ const PersonSchema = new Schema({
         type: String,
         required: true
     },
+    Surname: {
+        type: String,
+        required: false
+    },
     Identificator: {
         type: Number,
         required: true

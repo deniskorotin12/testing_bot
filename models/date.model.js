@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 
 const dateSchema = new Schema({
     getDate: {
-        type: Number,
+        type: String,
         required: true
     },
     current_goose: {

@@ -26,21 +26,21 @@ const bot = new TelegramBot(TOKEN, {
     }
 });
 
-const check_time = setInterval(function() {
-    let date = new Date();
+// const check_time = setInterval(function () {
+//     let date = new Date();
 
-    if (date.getHours() == hours && date.getMinutes() == minutes) {
-        bot.sendMessage(
-            347135150,
-            "Если вы не выберите Гуся дня, то это сделаю я!"
-        );
-        clearThisInterval();
-    }
-}, 3000);
+//     if (date.getHours() == hours && date.getMinutes() == minutes) {
+//         bot.sendMessage(
+//             347135150,
+//             "Если вы не выберите Гуся дня, то это сделаю я!"
+//         );
+//         clearThisInterval();
+//     }
+// }, 3000);
 
-clearThisInterval = () => {
-    return clearInterval(check_time);
-};
+// clearThisInterval = () => {
+//     return clearInterval(check_time);
+// };
 
 bot.onText(/\/gusi/, query => {
     if (query.chat.type == "private") {
@@ -55,29 +55,30 @@ bot.onText(/\/gusi/, query => {
     const Person = mongoose.model("person");
     const person = new Person({
         Name: query.from.first_name,
+        Surname: query.from.last_name,
         Identificator: query.from.id
     });
 
     const current_date = new Date();
     const modelDate = mongoose.model("get_date");
     const date = new modelDate({
-        getDate: current_date.getDate(),
+        getDate: current_date.toLocaleDateString(),
         year: current_date.getFullYear()
     });
 
     const get_model_date = modelDate
         .find({
             getDate: {
-                $in: [current_date.getDate()]
+                $in: [current_date.toLocaleDateString()]
             }
         })
         .then(dates => {
-            if (current_date.getDate() == dates[0].getDate) {
+            if (current_date.toLocaleDateString() == dates[0].getDate) {
                 var curr_gus = "";
-                modelDate.find(function(err, goose) {
+                modelDate.find(function (err, goose) {
                     bot.sendMessage(
                         query.chat.id,
-                        `Сегодня уже определяли Гуся, это - ${goose[0].current_goose}`
+                        `Сегодня уже определяли Гуся, это - ${dates[0].current_goose}`
                     );
                 });
             }
@@ -97,9 +98,8 @@ bot.onText(/\/gusi/, query => {
                         );
                         return;
                     }
-                    console.log("users - ", users);
                     for (let i = 0; i < users.length; i++) {
-                        person_array.push(users[i].Name);
+                        person_array.push(`${users[i].Name} ${users[i].Surname?users[i].Surname:''}`);
                     }
                     const what_is_the_goose = Math.floor(
                         Math.random() * person_array.length
@@ -111,7 +111,7 @@ bot.onText(/\/gusi/, query => {
                     );
                     var counter = 0;
                     const сurr_goose = new modelDate({
-                        getDate: current_date.getDate(),
+                        getDate: current_date.toLocaleDateString(),
                         current_goose: current_goose,
                         year: current_date.getFullYear()
                     });
@@ -141,28 +141,6 @@ bot.onText(/\/gusi/, query => {
                 });
         });
 });
-// bot.onText(/\/year/, query => {});
-
-// bot.onText(/\/donate/, query => {
-//     const chaId = query.chat.id;
-//     bot.sendInvoice(
-//         chaId,
-//         "Telegram Donate",
-//         "Best bot ever",
-//         "payload",
-//         "372774012:LIVE:9b70fade245922b9c177a6bb0806c6ee",
-//         "SOME_KEY",
-//         "UAH", [{
-//             label: "telegram_feed",
-//             amount: 2000
-//         }], {
-//             photo_url: "http://ono.org.ua/wp-content/uploads/2011/02/money_payment.jpg",
-//             need_name: true,
-//             is_flexible: true
-//         }
-//     );
-// });
-
 bot.onText(/\/reg/, query => {
     if (query.chat.type == "private") {
         bot.sendMessage(
@@ -172,12 +150,13 @@ bot.onText(/\/reg/, query => {
         return;
     }
 
-    const wasCreated = `Я Вас уже запоминал ранее`;
+    const wasCreated = `Вы уже были зарегистрированы в этой игре.`;
     const willBeCreate = `Я тебя запомнил, Гусяра - ${query.from.first_name}`;
 
     const Person = mongoose.model("person");
     const person = new Person({
         Name: query.from.first_name,
+        Surname: query.from.last_name,
         Identificator: query.from.id,
         Counter_Goose: 0,
         Group_id: query.chat.id
@@ -209,20 +188,33 @@ bot.onText(/\/me/, query => {
     }
 
     const Person = mongoose.model("person");
-    const getPerson = Person.find({
+    Person.find({
             Identificator: {
                 $in: [query.from.id]
             }
         })
         .then(person => {
-            bot.sendMessage(
-                query.chat.id,
-                ` Статистика по пользователю ${
-          query.from.first_name != undefined ? query.from.first_name : ""
-        } ${
-          query.from.last_name != undefined ? query.from.last_name : ""
-        }:\nВы были ${person[0].Counter_Goose} раз(а) Гусем`
-            );
+            let stat = `Статистика по пользователю ${
+                query.from.first_name != undefined ? query.from.first_name : ""
+              } ${
+                query.from.last_name != undefined ? query.from.last_name : ""
+              }:\nВы были ${person[0].Counter_Goose} раз(а) Гусем`;
+
+            if (person[0].Name != query.from.first_name || person[0].Surname != query.from.last_name) {
+                setTimeout(function () {
+                    Person.update({
+                            Identificator: person[0].Identificator
+                        }, {
+                            Name: query.from.first_name,
+                            Surname: query.from.last_name
+                        },
+                        err => {}
+                    );
+                }, 100)
+                bot.sendMessage(query.chat.id, `Вы сменили имя или фамилию. Ваши данные были обновлены.\n${stat}`);
+            } else {
+                bot.sendMessage(query.chat.id, stat);
+            }
         })
         .catch(e => {
             bot.sendMessage(
@@ -264,7 +256,7 @@ bot.onText(/\/stat/, query => {
             } else {
                 let text_stat = "";
                 for (let i = 0; i < users.length; i++) {
-                    text_stat += `${users[i].Name} - ${users[i].Counter_Goose}\n`;
+                    text_stat += `${users[i].Name?users[i].Name:''} ${users[i].Surname?users[i].Surname:''} - ${users[i].Counter_Goose}\n`;
                 }
                 bot.sendMessage(
                     query.chat.id,
@@ -278,10 +270,6 @@ bot.onText(/\/stat/, query => {
                 "Нету еще зарегистрированных пользователей"
             );
         });
-
-    function getUser(name, counter) {
-        bot.sendMessage(query.chat.id, `${name} был Гусем ${counter} раз(а) `);
-    }
 });
 
 bot.onText(/\/help/, query => {
@@ -295,14 +283,13 @@ bot.onText(/\/help/, query => {
     bot.sendMessage(
         query.chat.id,
         `
-    Вы можете воспользоваться такими командами:\n/me - Ваша статистика\n/reg - Зарегистрироваться в игре\ntop-5 - Выводит Топ 5 Гусей\n/stat - Статистика по всем пользователям\n/help - Помощь по командам\n/gusi - Определить гуся
+    Вы можете воспользоваться такими командами:\n/me - Ваша статистика\n/reg - Зарегистрироваться в игре\n/top5 - Выводит Топ 5 Гусей\n/stat - Статистика по всем пользователям\n/help - Помощь по командам\n/gusi - Определить гуся
 
     `
     );
 });
 
 bot.onText(/\/top5/, query => {
-
     if (query.chat.type == "private") {
         bot.sendMessage(
             query.chat.id,
@@ -312,14 +299,17 @@ bot.onText(/\/top5/, query => {
     }
 
     const Person = mongoose.model("person");
-    Person.find({ Group_id: { $in: [query.chat.id] } })
+    Person.find({
+            Group_id: {
+                $in: [query.chat.id]
+            }
+        })
         .sort("-Counter_Goose")
         .limit(5)
         .then(users => {
-            console.log(users);
             let text_stat = "";
             for (let i = 0; i < users.length; i++) {
-                text_stat += `${users[i].Name} - ${users[i].Counter_Goose}\n`;
+                text_stat += `${users[i].Name?users[i].Name:''} ${users[i].Surname?users[i].Surname:''} - ${users[i].Counter_Goose}\n`;
             }
             if (users.length < 5) {
                 bot.sendMessage(
